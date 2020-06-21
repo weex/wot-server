@@ -8,29 +8,9 @@ Authenticated, pseudonymous content ratings
 
 See [server_setup.md](doc/server_setup.md)
 
-## Run via Docker
+## Running
 
-Building and initial run
-
-```script
-git clone git@github.com:weex/corgi-server.git
-cd corgi-server 
-docker build --tag weex/corgi-server . 
-docker run -p 8332:8332 -p 2016:2016 --name corgi-server weex/corgi-server
-```
-Run once built
-
-```script
-docker start corgi-server
-```
-
-## Run via docker-compose (postgres container will be run also)
-
-```script
-        docker-compose build --no-cache
-        docker-compose up
-```
-**NOTE** --no-cache could be omitted if no changes in source tree where happen
+python3 server.py
 
 ## REST API
 
