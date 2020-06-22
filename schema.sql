@@ -1,45 +1,41 @@
 PRAGMA foreign_keys=OFF;
 BEGIN TRANSACTION;
-CREATE TABLE owner (
-    address varchar(64) primary key,
-    nonce varchar(32),
-    balance integer,
-    bad_attempts integer,
-    delegate varchar(64));
-CREATE TABLE kv (
-    key varchar(64) primary key,
-    value blob,
-    owner varchar(64),
-    testnet boolean,
-    sale integer,    /* which sale/bucket is this stored under */
-    foreign key(owner) references owner(address)
-);
-CREATE TABLE wallet (
-    address varchar(64) primary key,
-    contact varchar(256),
-    owner varchar(64)
-);
-CREATE TABLE sale (
+CREATE TABLE users (
     id integer primary key,
-    owner varchar(64),
+    username varchar(64),
+    public_key varchar(64),
+    challenge varchar(32),
+    bad_attempts integer,
     created text,
-    amount integer,
-    term integer,
-    contact varchar(255),
-    price integer,
-    bytes_used integer,
-    payment_address varchar(64),
-    paid boolean,
-    received varchar(32),
-    foreign key(owner) references owner(address)
+    verified text,
+    deleted text,
+    modified text
+);
+CREATE TABLE follows (
+    id integer primary key,
+    user_id integer,
+    user_id2 integer,
+    created text,
+    deleted text,
+    modified text
+);
+CREATE TABLE ratings (
+    id integer primary key,
+    user_id integer,
+    uri varchar(1024),
+    value integer,
+    created text,
+    deleted text,
+    modified text,
+    foreign key(user_id) references users(user_id)
 );
 CREATE TABLE log (
     created text,
     ip varchar(45),  /* max length of ipv6 address */
     action varchar(10),
     bytes integer,
-    owner varchar(64),
+    user_id integer(64),
     message text,
-    foreign key(owner) references owner(address)
+    foreign key(user_id) references users(user_id)
 );
 COMMIT;
