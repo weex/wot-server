@@ -1,11 +1,11 @@
 FROM ubuntu:latest
 
-MAINTAINER Arsen A. Gutsal <a.gutsal@softsky.com.ua>
+MAINTAINER David Sterry <davesterry@gmail.com>
 
 RUN apt update && apt upgrade -y && apt install git python3-pip postgresql-client -y
 RUN pip3 install --upgrade pip
 
-ENV WD /app/causeway
+ENV WD /app/wot-server
 WORKDIR ${WD}
 ADD . $WD
 RUN pip3 install -r requirements.txt
@@ -13,5 +13,5 @@ RUN pip3 install -r requirements.txt
 EXPOSE 8332 2016
 COPY default_settings.py settings.py
 
-ENV DATABASE_URI "postgresql://localhost/causeway"
+ENV DATABASE_URI "postgresql://localhost/wot-server"
 ENTRYPOINT ["sh", "docker-entrypoint.sh"]

@@ -1,11 +1,11 @@
 FROM ubuntu:latest
 
-MAINTAINER Arsen A. Gutsal <a.gutsal@softsky.com.ua>
+MAINTAINER David Sterry <davesterry@gmail.com>
 
 RUN apt update && apt upgrade -y && apt install git python3-pip sqlite3 -y
 RUN pip3 install --upgrade pip
 
-ENV WD /app/causeway
+ENV WD /app/wot-server
 WORKDIR ${WD}
 ADD . $WD
 RUN pip3 install -r requirements.txt
@@ -14,7 +14,7 @@ RUN pip3 install -r requirements.txt
 EXPOSE 8332 2016
 COPY default_settings.py settings.py
 
-DATABASE_URI = 'sqlite:////home/cw/causeway/causeway.db'
-RUN sqlite3 causeway.db < schema.sql
+DATABASE_URI = 'sqlite:////home/wotserver/wot-server/main.db'
+RUN sqlite3 main.db < schema.sql
 
-CMD python3 cserver.py
+CMD python3 server.py

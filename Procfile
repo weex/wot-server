@@ -1,1 +1,1 @@
-web: SERVER_PORT=$PORT python3 cserver.py
+web: SERVER_PORT=$PORT python3 server.py
