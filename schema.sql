@@ -5,7 +5,6 @@ CREATE TABLE users (
     username varchar(64),
     public_key varchar(64),
     challenge varchar(32),
-    bad_attempts integer,
     created text,
     verified text,
     deleted text,
