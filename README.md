@@ -1,14 +1,10 @@
-# Corgi Server
+# Web of Trust Server
  
-Server component of Corgi Web of Trust.
+Server for federated Web of Trust.
 
-Authenticated, pseudonymous content ratings
+Authenticated, pseudonymous user and content ratings
 
-## Installation
-
-See [server_setup.md](doc/server_setup.md)
-
-## Running
+## Usage
 
 python3 server.py
 
