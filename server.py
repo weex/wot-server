@@ -1,24 +1,17 @@
 #!/usr/bin/env python3
-'''
-Corgi Server - key/value storage server geared toward small files with ECSDA signature auth
-
-Usage:
-    python3 server.py
-'''
 from flask import Flask
 from flask import request
 from flask import abort, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import and_
 
-from settings import DATABASE_URI, PRICE, DATA_DIR, SERVER_PORT, DEBUG, TESTNET
+from settings import DATABASE_URI, DATA_DIR, SERVER_PORT, DEBUG
 import os
 import json
 import random
 import time
 import string
 import requests
-from decimal import Decimal
 
 from models import *
 
@@ -36,8 +29,8 @@ stored = 0
 @app.route('/help')
 def home():
     '''Home endpoint'''
-    home_obj = [{"name": "corgi-server",
-                 "description": "Hosting user and content ratings. Visit github.com/weex/wot-server for more info."
+    home_obj = [{"name": "wot-server",
+                 "description": "Server to support moderation via web-of-trust. Visit github.com/weex/wot-server for more info."
                 }
                ]
 
