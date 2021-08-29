@@ -10,10 +10,11 @@ CREATE TABLE users (
     deleted text,
     modified text
 );
-CREATE TABLE follows (
+CREATE TABLE trusts (
     id integer primary key,
     user_id integer,
     user_id2 integer,
+    value integer,
     created text,
     deleted text,
     modified text

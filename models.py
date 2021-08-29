@@ -36,15 +36,14 @@ class User(db.Model):
         return '<User %r>' % self.public_key
 
 """
-Follow - models a trust relationship from user1 to user2 with value on an integer scale
+Trust - models a trust relationship from user1 (source) to user2 (target) with value on an integer scale
 """
-class Follow(db.Model):
-    __tablename__ = 'follows'
+class Trust(db.Model):
+    __tablename__ = 'trusts'
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer)
     user_id2 = db.Column(db.Integer)
-    uri = db.Column(db.String(1024))
     value = db.Column(db.Integer)
     created = db.Column(db.DateTime, default=db.func.current_timestamp())
     deleted = db.Column(db.DateTime)
@@ -56,7 +55,7 @@ class Follow(db.Model):
         self.value = value
 
     def __repr__(self):
-        return "<Rating %r>" % self.id
+        return "<Trust %r>" % self.id
 
 """
 Rating - for rating a piece of content on an integer scale

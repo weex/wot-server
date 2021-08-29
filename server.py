@@ -86,77 +86,36 @@ def create_user():
            )
 
 #rate
-@app.route('/rate', methods=['POST'])
+@app.route('/trust', methods=['POST'])
 def put():
-    '''Store a key-value pair.'''
-    # get size of file sent
-    # Validate JSON body w/ API params
+    '''Store a rating pair.'''
+
     try:
         body = request.data.decode('utf-8')
         in_obj = json.loads(body)
     except:
         return ("JSON Decode failed", 400, {'Content-Type':'text/plain'})
 
-    k = in_obj['key']
-    v = in_obj['value']
-    o = in_obj['owner']
-    n = in_obj['nonce']
-    s = in_obj['signature']
-    d = in_obj['signature_address']
-    if 'testnet' in in_obj:
-        testnet = in_obj['testnet']
+    s = in_obj['source']          # source user's id
+    t = in_obj['target']          # target user's id
+    v = in_obj['value']           # integer value for rating
+
+    trust = db.session.query(Trust).filter(and_(Trust.user_id == s, Trust.user_id2 == t)).first()
+    if trust is None:
+        trust = Trust(s, t, v)
+        db.session.add(trust)
+        db.session.commit()
     else:
-        testnet = False
-
-    owner = Owner.query.filter_by(address=o).first()
-    if owner is None:
-        body = json.dumps({'error': 'User not found'})
-        code = 403
-    elif owner.nonce != n:
-        body = json.dumps({'error': 'Bad nonce'})
-        code = 401
-    elif not verify(d, k + v + d + n, s) :
-        body = json.dumps({'error': 'Incorrect signature'})
-        code = 401
-    else:
-        size = len(k) + len(v)
-
-        # need to also check that we have an enrollment that makes this a delegate of this owner
-
-        # check if owner has enough free storage
-        # get free space from each of owner's buckets
-        result = db.engine.execute('select * from sale where julianday("now") - \
-                    julianday(sale.created) < sale.term order by sale.created desc')
-        # choose newest bucket that has enough space
-        sale_id = None
-        for row in result:
-            if (row[7] + size) < (1024 * 1024):
-                sale_id = row[0]
+        trust.value = v
+        db.session.commit()
     
-        if sale_id is None:     # we couldn't find enough free space
-            body = json.dumps({'error': 'Insufficient storage space.'})
-            code = 403 
-        else:
-            # check if key already exists and is owned by the same owner
-            kv = db.session.query(Kv).filter(and_(Kv.key == k, Kv.owner == o)).first()
-            if kv is None:
-                kv = Kv(k, v, o, sale_id, testnet)
-                db.session.add(kv)
-                db.session.commit()
-            else:
-                kv.value = v
-                db.session.commit()
-    
-            s = db.session.query(Sale).get(sale_id)
-            s.bytes_used = s.bytes_used + size
-            db.session.commit()
-            body = json.dumps({'result': 'success'})
-            code = 201
+    body = json.dumps({'result': 'success'})
+    code = 201
     
     return (body, code, {'Content-length': len(body),
-                        'Content-type': 'application/json',
+                         'Content-type': 'application/json',
                         }
-           )
+    )
 
 @app.route('/delete', methods=['POST'])
 def delete():
@@ -204,51 +163,20 @@ def delete():
 def get():
     '''Get ratings for the current user.'''
     
-    key = request.args.get('key')
+    user_id = request.args.get('source')
 
-    kv = Kv.query.filter_by(key=key).first()
+    trusts = Trust.query.filter_by(user_id=user_id).all()
 
-    if kv is None:
-        body = json.dumps({'error': 'Key not found.'})
+    if trusts is None:
+        body = json.dumps({'error': 'User not found.'})
         code = 404
     else:
-        body = json.dumps({'key': key, 'value': kv.value})
+        body = json.dumps(trusts)
         code = 200
 
-    # calculate size and check against quota on kv's sale record
     return (body, code, {'Content-length': len(body),
-                        'Content-type': 'application/json',
+                         'Content-type': 'application/json',
                         }
-           )
-
-# login request
-@app.route('/nonce')
-def nonce():
-    '''Return 32-byte nonce for generating non-reusable signatures..'''
-    # check if user exists
-    o = db.session.query(Owner).get(request.args.get('address'))
-    if o is None:
-        return abort(500)
-
-    # clear the nonce by sending it to the server
-    if request.args.get('clear') and request.args.get('clear') == o.nonce:
-        o.nonce = ''
-        db.session.commit()
-        body = json.dumps({'nonce': o.nonce})
-    # if nonce is set for user return it, else make a new one
-    elif o.nonce and len(o.nonce) == 32:
-        body = json.dumps({'nonce': o.nonce})
-    # if not, create one and store it
-    else:
-        print("storing")
-        n = ''.join(random.SystemRandom().choice(string.hexdigits) for _ in range(32))
-        o.nonce = n.lower()
-        db.session.commit()
-        body = json.dumps({'nonce': o.nonce})
-
-    return (body, 200, {'Content-length': len(body),
-                        'Content-type': 'application/json',
-                       }
            )
 
 def has_no_empty_params(rule):

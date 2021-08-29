@@ -4,6 +4,14 @@ Server for federated Web of Trust.
 
 Authenticated, pseudonymous user and content ratings
 
+
+## Setup
+
+```sh
+cp default_settings.py settings.py       # then edit settings to fix path to code
+sqlite3 main.db < schema.sql
+```
+
 ## Usage
 
 python3 server.py
