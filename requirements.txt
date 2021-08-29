@@ -4,7 +4,6 @@ requests
 itsdangerous
 Jinja2
 MarkupSafe
-python-bitcoinlib
 SQLAlchemy
 Werkzeug
 wheel

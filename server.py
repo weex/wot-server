@@ -36,8 +36,8 @@ stored = 0
 @app.route('/help')
 def home():
     '''Home endpoint'''
-    home_obj = [{"name": "corgi-server",       # service 'causeway', version '1'
-                 "description": "Hosting and sharing content ratings. Visit corgi.org for more info."
+    home_obj = [{"name": "corgi-server",
+                 "description": "Hosting user and content ratings. Visit github.com/weex/wot-server for more info."
                 }
                ]
 
