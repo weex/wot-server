@@ -128,7 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# corgi-server unique
+# wot-server
 *.sqlite3
 *.log
 *.db
