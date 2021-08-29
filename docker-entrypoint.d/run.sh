@@ -1,3 +1,3 @@
 #!/bin/sh
 
-python3 cserver.py
+python3 server.py
