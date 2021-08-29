@@ -48,8 +48,7 @@ def status():
     st = os.statvfs(DATA_DIR)
     free = st.f_bavail * st.f_frsize
     body = json.dumps({'uptime': uptime,
-                       'stored': str(st),
-                       'free': str(free),
+                       'free': str(free/1024/1024) + " Mb",
                       }, indent=2
                      )
     return (body, 200, {'Content-length': len(body),
