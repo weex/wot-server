@@ -12,3 +12,7 @@ python3 server.py
 
 * All requests via HTTP GET except where noted.
 * Data returned as JSON, formatted with indent=4 for now.
+
+/ - returns basic info
+
+/status - returns uptime and free space
