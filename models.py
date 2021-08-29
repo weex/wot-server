@@ -10,6 +10,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+
+"""
+User - user model that supports public key authentication
+"""
 class User(db.Model):
     __tablename__ = 'users'
 
@@ -17,7 +21,6 @@ class User(db.Model):
     username = db.Column(db.String(64))
     public_key = db.Column(db.String(64))
     challenge = db.Column(db.String(32), unique=True)
-    bad_attempts = db.Column(db.Integer)
     created = db.Column(db.DateTime, default=db.func.current_timestamp())
     verified = db.Column(db.DateTime)
     deleted = db.Column(db.DateTime)
@@ -32,6 +35,9 @@ class User(db.Model):
     def __repr__(self):
         return '<User %r>' % self.public_key
 
+"""
+Follow - models a trust relationship from user1 to user2 with value on an integer scale
+"""
 class Follow(db.Model):
     __tablename__ = 'follows'
 
@@ -52,6 +58,9 @@ class Follow(db.Model):
     def __repr__(self):
         return "<Rating %r>" % self.id
 
+"""
+Rating - for rating a piece of content on an integer scale
+"""
 class Rating(db.Model):
     __tablename__ = 'ratings'
 
