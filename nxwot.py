@@ -55,10 +55,6 @@ def calculate_score(target):
             score += value * capacities[truster_pair] / 100.0 
     return score
 
-# rank should take away influence from trusters
-
-
-
 # examine a single record - using global vars G, paths, ranks, capacities
 def inspect(source, target):
     print("Source: " + source)
@@ -72,8 +68,7 @@ def inspect(source, target):
     print("Capacity: " + str(capacities[(source, target)]))
 
 
-inspect(ownidentity, '4077')
-inspect(ownidentity, '10592')
+# inspect(ownidentity, '10592')
 
 for target in paths:
     # inspect(ownidentity, target)
