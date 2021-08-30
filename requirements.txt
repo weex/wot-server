@@ -7,3 +7,4 @@ MarkupSafe
 SQLAlchemy
 Werkzeug
 wheel
+networkx
