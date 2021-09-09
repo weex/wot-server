@@ -1,77 +1,46 @@
-import networkx as nx
-import csv
+import wotlib as wl
 
-G = nx.DiGraph()
+# This script is an attempt to reimplement the Freenet Web of Trust scoring algorithm
+# with the improvement mentioned in 
+# https://github.com/xor-freenet/plugin-WebOfTrust/blob/master/developer-documentation/core-developers-manual/OadSFfF-version1.2-non-print-edition.pdf
 
-# read in edges, remove first row manually
-with open("trustdeduplicated.csv") as csvDataFile:
-    csvReader = csv.reader(csvDataFile, delimiter=';')
+# Initial full calculation ---------------------------------------------
 
-    for row in csvReader:
-        G.add_edge(row[0], row[1], value=row[2])
+wl.elapsed("start")
+
+#trusts, G = wl.load_data("trustdeduplicated.csv", quirk=True)
+trusts, G = wl.load_data("test01.csv")
 
 # pick an own identity to start with 
 ownidentity = '0'
 
-# we get shortest paths only from own identity
-paths = nx.shortest_path(G, source = ownidentity)
+# Ranks ---------------------------------------------------------------- 
 
-# get ranks from paths, we can get lengths only above if we don't care about path
-ranks = {}
-for target in paths:
-    ranks[(ownidentity,target)] = len(paths[target]) - 1
+paths, ranks = wl.calc_paths_and_ranks(G, trusts, ownidentity)
 
-# set rank to -1 (our equivalent of infinity) if value < 0
-for e in G.edges:
-    source = e[0]
-    target = e[1]
-    if float(G.get_edge_data(source, target)['value']) < 0:
-        ranks[(source, target)] = -1
-        
-# convert ranks to capacities
-capacities = {}
-rank_to_capacity = [100, 40, 16, 6, 2, 1]
-for pair in ranks:
-    rank = ranks[pair]
-    if rank < 0:
-        capacity = 0
-    elif rank > 5:
-        capacity = 1
-    else:
-        capacity = rank_to_capacity[rank - 1]
-    capacities[pair] = capacity
+# Capacities -----------------------------------------------------------
 
-def calculate_score(target):
-    # calculate score - average of trust values for target weighted by capacity
-    trusters = G.predecessors(target)
-    score = 0
-    for t in trusters:
-        truster_pair = (ownidentity, t)
-        value = 0
-        # we only care about trust values from trusters that we have a path to 
-        # so check that we have a capacity from ownidentity to truster 
-        if G.get_edge_data(str(t), target) and truster_pair in capacities:
-            value = float(G.get_edge_data(str(t), target)['value'])
-            score += value * capacities[truster_pair] / 100.0 
-    return score
+capacities = wl.derive_capacities(ranks)
 
-# examine a single record - using global vars G, paths, ranks, capacities
-def inspect(source, target):
-    print("Source: " + source)
-    print("Target: " + target)
-    if G.get_edge_data(source, target):
-        print("Trust value: " + G.get_edge_data(source, target)['value'])
-    else:
-        print("Trust value: not directly valued")
-    print("Path: " + str(paths[target]))
-    print("Rank: " + str(ranks[(source, target)]))
-    print("Capacity: " + str(capacities[(source, target)]))
+wl.elapsed("converted ranks to capacities")
 
+# Scores ---------------------------------------------------------------
 
 # inspect(ownidentity, '10592')
 
-for target in paths:
-    # inspect(ownidentity, target)
-    score = calculate_score(target)
-    print("{};{};{}".format(ownidentity,target,score)) 
+scores = {ownidentity: wl.calculate_scores_for_all(G, paths, capacities, ownidentity)}
 
+wl.elapsed("calculated scores")
+
+# manual testing - not updating global state of G, paths, ranks, capacities, scores
+print("case 1 change from -10 to -100")
+wl.update_trust(G, trusts, paths, ranks, capacities, scores, "0", "13348", "1408", -100)
+
+print("case 2 change from 100.0 to 50.0")
+wl.update_trust(G, trusts, paths, ranks, capacities, scores, "0", "6", "10695", 50.0)
+
+print("case 3 change from -10.0 to 50.0")
+wl.update_trust(G, trusts, paths, ranks, capacities, scores, "0", "24" , "6214", 50)
+
+print("case 4 change from 100.0 to -50")
+wl.update_trust(G, trusts, paths, ranks, capacities, scores, "0", "8", "8191", 100.0)
