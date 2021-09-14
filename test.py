@@ -1,7 +1,8 @@
 import unittest
 
 from weboftrust import (load_data, calc_paths_and_ranks, get_capacity,
-                       derive_capacities, calculate_score, calculate_score_for_all)
+                       derive_capacities, calculate_score, calculate_score_for_all,
+                       update_scores_from_one_trust)
 
 class TestWebOfTrust(unittest.TestCase):
     def test_paths_and_ranks(self):
@@ -62,6 +63,33 @@ class TestWebOfTrust(unittest.TestCase):
 
         self.assertEqual(calculate_score_for_all(G, paths, capacities, source),
                          {'0': 100.0, '1': 100.0, '2': 40.0})
+
+    def test_update_trust1(self):
+        """
+        Test four cases of updating a single trust value 
+        """
+        trusts, G = load_data("testdata/test01.csv")
+        ownidentity = "0" 
+        paths, ranks = calc_paths_and_ranks(G, trusts, ownidentity)
+        capacities = derive_capacities(ranks)
+        scores = calculate_score_for_all(G, paths, capacities, ownidentity)
+
+        # negative trust changes to another negative trust
+        new_scores = update_scores_from_one_trust(G, trusts, paths, ranks, capacities, scores, ownidentity, '1', '3', -100.0) 
+        self.assertEqual(scores, {'0': 100.0, '1': 100.0, '2': 40.0})
+
+        # positive trust changes to another positive trust 
+        new_scores = update_scores_from_one_trust(G, trusts, paths, ranks, capacities, scores, ownidentity, '1', '2', 50.0) 
+        self.assertEqual(new_scores, {'0': 100.0, '1': 100.0, '2': 20.0})
+
+        # negative trust changes to positive trust
+        new_scores  = update_scores_from_one_trust(G, trusts, paths, ranks, capacities, scores, ownidentity, '1', '3', 100.0) 
+        self.assertEqual(new_scores, {'0': 100.0, '1': 100.0, '2': 40.0, '3': 40.0})
+
+        # positive trust changes to negative trust
+        new_scores  = update_scores_from_one_trust(G, trusts, paths, ranks, capacities, scores, ownidentity, '0', '1', -100.0) 
+        self.assertEqual(new_scores, {'0': 100.0, '1': -100.0, '2': 0.0, '3': 0.0})
+        
 
 if __name__ == '__main__':
     unittest.main()

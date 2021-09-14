@@ -2,14 +2,22 @@ import csv
 import networkx as nx
 
 from collections import deque
+from copy import deepcopy
 from time import time
 
+debug = True
 debug = False
+profile = True
+profile = False
 
 start = time()
 def elapsed(message):
-    if debug:
+    if profile:
         print(str(time() - start), ",", message)
+
+def print_debug(string):
+    if debug:
+        print(string)
 
 def load_data(filename, delimiter=','):
     trusts = {}       # raw data
@@ -97,31 +105,31 @@ def score_all_from_file(filename, source):
 
 # update_trust
 # process one trust value change and update all affected scores 
-def update_trust(G, trusts, paths, ranks, capacities, scores, ownidentity, source, target, trust):
+def update_scores_from_one_trust(G, trusts, paths, ranks, capacities, scores, ownidentity, source, target, trust):
     pair = (source, target)
     affected_ranks = [target]
+    new_scores = deepcopy(scores)
 
     # get current trust
     old_trust = None
     if pair in trusts:
-        print("edge ({}, {}) found".format(source, target))
+        print_debug("edge ({}, {}) found".format(source, target))
         old_trust = trusts[pair]
     else:
-        print("({}, {}) new trust link!".format(source, target))
+        print_debug("({}, {}) new trust link!".format(source, target))
 
     # compare, there are four cases
     # 1. old was neg or non-existent, new is neg => no change
     if (old_trust < 0 or old_trust is None) and trust < 0:
-        print("neg/no to neg\n")
-        pass
+        trusts[pair] = trust
+        return scores 
 
     # 2. old was pos, new is pos => rank and capacity not affected, just update value and score
     elif old_trust >= 0 and trust >= 0:
         trusts[pair] = trust 
         G[source][target]['value'] = trust
-
-        # we'll calculate later at least the scores from paths that include target
-        #recalc_descendants(target)
+        new_scores[target] = calculate_score(G, capacities, ownidentity, target)
+        return new_scores
 
     # 3. old was neg or non-existent, new is pos => add edge, calc affected ranks, affected capacities, and affected scores
     elif (old_trust < 0 or old_trust is None) and trust >= 0:
@@ -130,44 +138,50 @@ def update_trust(G, trusts, paths, ranks, capacities, scores, ownidentity, sourc
         G.add_edge(source, target, value=trust)
         new_paths = nx.shortest_path(G, source = source)
        
-        print("len old paths {} len new paths {}".format(len(paths), len(new_paths)))
+        print_debug("len old paths {} len new paths {}".format(len(paths), len(new_paths)))
 
         # calc affected ranks, i.e. ranks for paths that included target or target's successors
         q = deque()
         q.append(target)
         while q:
             this_target = q.popleft()
-            old_rank = ranks[(ownidentity, this_target)]
-            ranks[(ownidentity, this_target)] = len(paths[this_target]) - 1
+            old_rank = ranks.get((ownidentity, this_target), None)
+            ranks[(ownidentity, this_target)] = len(new_paths[this_target])
             if old_rank != ranks[(ownidentity, this_target)]:
-                print("traversal to {}, rank changed from {} to {}".format(this_target, old_rank, ranks[(ownidentity, this_target)]))
-                affected_ranks.append(this_target)
+                print_debug("traversal to {}, rank changed from {} to {}".format(this_target, old_rank, ranks[(ownidentity, this_target)]))
+                if this_target not in affected_ranks:
+                    affected_ranks.append(this_target)
             else:
-                print("traversal to {}, rank unchanged".format(this_target))
+                print_debug("traversal to {}, rank unchanged".format(this_target))
             
             # add any successors of the current node if target is in shortest path from ownidentity
             for t in G.successors(this_target):
                 if target in paths[t]:
                     q.append(t)
-        print("affected ranks: {}".format(affected_ranks))
+        print_debug("affected ranks: {}".format(affected_ranks))
 
         # change affected capacities
         for t in affected_ranks:
             pair = (ownidentity, t)
-            old_capacity = capacities[pair]
+            old_capacity = capacities.get(pair, None)
             capacities[pair] = get_capacity(ranks[pair])
-            print("                capacity changed from {} to {}".format(old_capacity, capacities[pair]))
+            print_debug("                capacity changed from {} to {}".format(old_capacity, capacities[pair]))
 
         # update scores
         for t in affected_ranks:
-            old_score = scores[ownidentity][t]
-            new_score = calculate_score(G, capacities, source, t)
-            print("                score changed from {} to {}".format(old_score, new_score))
-            scores[ownidentity][t] = new_score
-            #inspect(ownidentity, t)
+            new_scores[t] = calculate_score(G, capacities, ownidentity, t)
+            print_debug("                score changed from {} to {}".format(scores.get(t, None), new_scores[t]))
+
+        return new_scores 
 
     # 4. old was pos, new is neg => recalc all?
-    elapsed(target)
+    elif old_trust >= 0 and trust < 0:
+        trusts[pair] = trust
+        G[source][target]['value'] = trust
+        new_paths, new_ranks = calc_paths_and_ranks(G, trusts, ownidentity)
+        new_capacities = derive_capacities(new_ranks)
+
+        return calculate_score_for_all(G, new_paths, new_capacities, ownidentity)
 
 # examine a single record
 def inspect(G, paths, ranks, capacities, source, target):
