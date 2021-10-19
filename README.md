@@ -34,6 +34,10 @@ sqlite3 main.db < schema.sql
 
 python3 server.py
 
+## Testing
+
+python -m test
+
 ## REST API
 
 * All requests via HTTP GET except where noted.
