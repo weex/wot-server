@@ -1,4 +1,4 @@
-# Trust scoring proof-of-concept
+Trust scoring proof-of-concept
 
 After cloning, save [trustdeduplicated.csv](https://figshare.com/articles/dataset/The_Freenet_social_trust_graph_extracted_from_the_Web_of_Trust/4725664) to the root of the repo, then open it and delete its first row with the column headings. Then you can run the following to import it.
 
@@ -46,3 +46,31 @@ python -m test
 / - returns basic info
 
 /status - returns uptime and free space
+
+### /trust (POST) - set or update single trust value
+    Either value or delta must be set.
+
+    Parameters
+        source - string
+        dest - string
+        value - set trust value from source to dest, float in range (-100.0, 100.0) 
+        delta - amount to increment or decrement trust value, float in range (-200.0, 200)
+
+    Returns
+        status - "success" or "error: " + error reason
+        
+### /score (GET) - return score from source to dest
+    Parameters
+        source - string
+        dest - string
+
+    Returns
+        status - "success" or "error: " + error reason
+        trusted - boolean
+        
+### /rescore (GET) - recalculate scores
+    Parameters
+        (none)
+
+    Returns
+        status - "success" or "error: " + error reason
