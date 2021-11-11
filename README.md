@@ -22,7 +22,6 @@ Server for federated Web of Trust.
 
 Authenticated, pseudonymous user and content ratings
 
-
 ## Setup
 
 ```sh
@@ -41,7 +40,8 @@ python -m test
 ## REST API
 
 * All requests via HTTP GET except where noted.
-* Data returned as JSON, formatted with indent=4 for now.
+* Data returned as JSON
+* All responses include `status` (an HTTP standard RFC 2616 response code) and `message` populated on error.
 
 / - returns basic info
 
@@ -56,21 +56,14 @@ python -m test
         value - set trust value from source to dest, float in range (-100.0, 100.0) 
         delta - amount to increment or decrement trust value, float in range (-200.0, 200)
 
-    Returns
-        status - "success" or "error: " + error reason
-        
-### /score (GET) - return score from source to dest
+### /score - return score from source to dest
     Parameters
         source - string
         dest - string
 
     Returns
-        status - "success" or "error: " + error reason
         trusted - boolean
         
-### /rescore (GET) - recalculate scores
+### /rescore - recalculate scores
     Parameters
         (none)
-
-    Returns
-        status - "success" or "error: " + error reason
