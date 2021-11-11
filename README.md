@@ -46,3 +46,29 @@ python -m test
 / - returns basic info
 
 /status - returns uptime and free space
+
+### /trust (POST) - set or update trust single trust value
+    Parameters
+        source - string
+        dest - string
+        value - set trust value from source to dest, float in range (-100.0, 100.0) 
+        delta - amount to increment or decrement trust value, float in range (-200.0, 200)
+
+    Returns
+        status - "success" or "error: " + error reason
+        
+### /score (GET) - return score from source to dest
+    Parameters
+        source - string
+        dest - string
+
+    Returns
+        status - "success" or "error: " + error reason
+        trusted - boolean
+        
+### /rescore (GET) - recalculate scores
+    Parameters
+        (none)
+
+    Returns
+        status - "success" or "error: " + error reason
