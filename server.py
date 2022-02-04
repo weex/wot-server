@@ -2,8 +2,8 @@
 from flask import Flask
 from flask import request
 from flask import abort, url_for
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import and_
+#from flask_sqlalchemy import SQLAlchemy
+#from sqlalchemy import and_
 
 from settings import DATABASE_URI, DATA_DIR, SERVER_PORT, DEBUG
 import os
@@ -13,17 +13,26 @@ import time
 import string
 import requests
 
-from models import *
+#from models import *
 
+from weboftrust import (load_data, calc_paths_and_ranks, get_capacity,
+                       derive_capacities, calculate_score, calculate_score_for_all,
+                       update_scores_from_one_trust)
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+#app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
+#app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+#db = SQLAlchemy(app)
 
 # start time
 start_time = time.time()
 stored = 0
+
+trusts, G = load_data("testdata/test01.csv")
+ownidentity = "0"
+paths, ranks = calc_paths_and_ranks(G, trusts, ownidentity)
+capacities = derive_capacities(ranks)
+scores = calculate_score_for_all(G, paths, capacities, ownidentity)
 
 @app.route('/')
 @app.route('/help')
@@ -56,35 +65,6 @@ def status():
                        }
            )
 
-@app.route('/request')
-def create_user():
-    '''Creates user account (unverified).'''
-    # extract account address from client request
-    username = request.args.get('username')
-    public_key = request.args.get('public_key')
-
-    # check if user exists
-    o = db.session.query(User).filter(User.public_key == public_key).first()
-    print(o)
-    if o is None:
-        # create them
-        o = User(username, public_key)
-        print(o)
-        db.session.add(o)
-        db.session.commit()
-
-        body = json.dumps({'result': 'success'},
-                           indent=2)
-    else:
-        body = json.dumps({'result': 'error',
-                           'message': 'Public key already exists.'},
-                           indent=2)
-
-    return (body, 200, {'Content-length': len(body),
-                        'Content-type': 'application/json',
-                       }
-           )
-
 #rate
 @app.route('/trust', methods=['POST'])
 def put():
@@ -93,76 +73,41 @@ def put():
     try:
         body = request.data.decode('utf-8')
         in_obj = json.loads(body)
-        s = in_obj['source']          # source user's id
-        t = in_obj['target']          # target user's id
-        v = in_obj['value']           # integer value for rating
+        source = in_obj['source']          # source user's id
+        target = in_obj['target']          # target user's id
+        value = in_obj['value']           # float value for rating
     except:
         body = '{"message": "JSON Decode failed"}'
         return (body, 400, {'Content-length': 0,
                             'Content-Type':'text/plain'})
 
-    trust = db.session.query(Trust).filter(and_(Trust.user_id == s, Trust.user_id2 == t)).first()
-    if trust is None:
-        trust = Trust(s, t, v)
-        db.session.add(trust)
-        db.session.commit()
-    else:
-        trust.value = v
-        db.session.commit()
+    global scores
+    scores = update_scores_from_one_trust(G, trusts, paths, ranks, capacities, scores, ownidentity, source, target, value) 
+
+    print(scores)
+
+    #trust = db.session.query(Trust).filter(and_(Trust.user_id == s, Trust.user_id2 == t)).first()
+    #if trust is None:
+    #    trust = Trust(s, t, v)
+    #    db.session.add(trust)
+    #    db.session.commit()
+    #else:
+    #    trust.value = v
+    #    db.session.commit()
     
     return ('', 200, {'Content-length': 0,
                       'Content-type': 'application/json',
                      })
 
-@app.route('/delete', methods=['POST'])
-def delete():
-    '''Delete a key-value pair.'''
-    # Validate JSON body w/ API params
-    try:
-        body = request.data.decode('utf-8')
-        in_obj = json.loads(body)
-    except:
-        return ("JSON Decode failed", 400, {'Content-Type':'text/plain'})
 
-    k = in_obj['key']
-    d = in_obj['address']
-    n = in_obj['nonce']
-    s = in_obj['signature']
-
-    # check signature
-    owner = Owner.query.filter_by(delegate=d).first()
-    if owner.nonce not in n or verify(o, k + o + n, s):
-        body = json.dumps({'error': 'Incorrect signature.'})
-        code = 401
-    else:
-        # check if key already exists and is owned by the same owner
-        kv = db.session.query(Kv).filter_by(key=k).filter_by(owner=o).first()
-        if kv is None:
-            body = json.dumps({'error': 'Key not found or not owned by caller.'})
-            code = 404
-        else:
-            # free up storage quota and remove kv
-            size = len(kv.value)
-            sale_id = kv.sale
-            s = db.session.query(Sale).get(sale_id)
-            s.bytes_used = s.bytes_used - size
-            db.session.delete(kv)
-            db.session.commit()
-            body = json.dumps({'result': 'success'})
-            code = 200
-    
-    return (body, code, {'Content-length': len(body),
-                         'Content-type': 'application/json',
-                        }
-           )
-
-@app.route('/get')
+@app.route('/score')
 def get():
-    '''Get ratings for the current user.'''
+    '''Get trusted status of target user from source's perspective.'''
     
-    user_id = request.args.get('source')
+    source = request.args.get('source')
+    target = request.args.get('target')
 
-    trusts = Trust.query.filter_by(user_id=user_id).all()
+    trusts = Trust.query.filter_by(user_id=source).all()
 
     if trusts is None:
         body = json.dumps({'error': 'User not found.'})
