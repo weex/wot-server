@@ -1,0 +1,89 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Web of Trust API
+  description: Providing API access to update trust scores,  retrieve trusted state and recalculate scoring.
+
+servers:
+  - url: http://localhost:20202
+
+paths:
+  /trust:
+    post:
+      description: Set or update single trust value
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - source
+                - target
+              properties:
+                source:
+                  description: Giver of trust
+                  type: string
+                target:
+                  description: Recipient of trust
+                  type: string
+                value:
+                  type: number
+                delta:
+                  type: number
+      responses:
+        '200':
+          description: Success set or updated a trust value
+  /score:
+    get:
+      description: Set or update single trust value
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - source
+                - target
+              properties:
+                source:
+                  description: Giver of trust
+                  type: string
+                target:
+                  description: Recipient of trust
+                  type: string
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trusted:
+                    type: boolean
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  message:
+                    type: string
+  /rescore:
+    get:
+      description: Recalculate scores
+      responses:
+        '200':
+          description: Successfully retrieved
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:   
+                  message:
+                    type: string

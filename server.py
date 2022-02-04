@@ -93,12 +93,13 @@ def put():
     try:
         body = request.data.decode('utf-8')
         in_obj = json.loads(body)
+        s = in_obj['source']          # source user's id
+        t = in_obj['target']          # target user's id
+        v = in_obj['value']           # integer value for rating
     except:
-        return ("JSON Decode failed", 400, {'Content-Type':'text/plain'})
-
-    s = in_obj['source']          # source user's id
-    t = in_obj['target']          # target user's id
-    v = in_obj['value']           # integer value for rating
+        body = '{"message": "JSON Decode failed"}'
+        return (body, 400, {'Content-length': 0,
+                            'Content-Type':'text/plain'})
 
     trust = db.session.query(Trust).filter(and_(Trust.user_id == s, Trust.user_id2 == t)).first()
     if trust is None:
@@ -109,13 +110,9 @@ def put():
         trust.value = v
         db.session.commit()
     
-    body = json.dumps({'result': 'success'})
-    code = 201
-    
-    return (body, code, {'Content-length': len(body),
-                         'Content-type': 'application/json',
-                        }
-    )
+    return ('', 200, {'Content-length': 0,
+                      'Content-type': 'application/json',
+                     })
 
 @app.route('/delete', methods=['POST'])
 def delete():
