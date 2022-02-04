@@ -120,19 +120,19 @@ def update_scores_from_one_trust(G, trusts, paths, ranks, capacities, scores, ow
 
     # compare, there are four cases
     # 1. old was neg or non-existent, new is neg => no change
-    if (old_trust < 0 or old_trust is None) and trust < 0:
+    if (old_trust is None or old_trust < 0) and trust < 0:
         trusts[pair] = trust
         return scores 
 
     # 2. old was pos, new is pos => rank and capacity not affected, just update value and score
-    elif old_trust >= 0 and trust >= 0:
+    elif old_trust is not None and old_trust >= 0 and trust >= 0:
         trusts[pair] = trust 
         G[source][target]['value'] = trust
         new_scores[target] = calculate_score(G, capacities, ownidentity, target)
         return new_scores
 
     # 3. old was neg or non-existent, new is pos => add edge, calc affected ranks, affected capacities, and affected scores
-    elif (old_trust < 0 or old_trust is None) and trust >= 0:
+    elif (old_trust is None or old_trust < 0) and trust >= 0:
         # update trust
         trusts[pair] = trust
         G.add_edge(source, target, value=trust)
@@ -175,7 +175,7 @@ def update_scores_from_one_trust(G, trusts, paths, ranks, capacities, scores, ow
         return new_scores 
 
     # 4. old was pos, new is neg => recalc all?
-    elif old_trust >= 0 and trust < 0:
+    elif old_trust is not None and old_trust >= 0 and trust < 0:
         trusts[pair] = trust
         G[source][target]['value'] = trust
         new_paths, new_ranks = calc_paths_and_ranks(G, trusts, ownidentity)
