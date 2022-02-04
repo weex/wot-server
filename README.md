@@ -39,4 +39,4 @@ python -m test
 
 ## REST API
 
-The API is defined in openapi-spec.yaml
+The API is defined in [openapi-spec.yaml](openapi-spec.yaml)
