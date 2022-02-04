@@ -35,8 +35,7 @@ capacities = derive_capacities(ranks)
 scores = calculate_score_for_all(G, paths, capacities, ownidentity)
 
 @app.route('/')
-@app.route('/help')
-def home():
+def get_home():
     '''Home endpoint'''
     home_obj = [{"name": "wot-server",
                  "description": "Server to support moderation via web-of-trust. Visit github.com/weex/wot-server for more info."
@@ -48,10 +47,10 @@ def home():
     return (body, 200, {'Content-length': len(body),
                         'Content-type': 'application/json',
                        }
-                       )
+           )
 
 @app.route('/status')
-def status():
+def get_status():
     '''Return general info about server instance. '''
     uptime = str(int(time.time() - start_time))
     st = os.statvfs(DATA_DIR)
@@ -67,7 +66,7 @@ def status():
 
 #rate
 @app.route('/trust', methods=['POST'])
-def put():
+def post_trust():
     '''Store a rating pair.'''
 
     try:
@@ -78,7 +77,7 @@ def put():
         value = in_obj['value']           # float value for rating
     except:
         body = '{"message": "JSON Decode failed"}'
-        return (body, 400, {'Content-length': 0,
+        return (body, 400, {'Content-length': len(body),
                             'Content-Type':'text/plain'})
 
     global scores
@@ -97,48 +96,31 @@ def put():
     
     return ('', 200, {'Content-length': 0,
                       'Content-type': 'application/json',
-                     })
+                     }
+           )
 
 
 @app.route('/score')
-def get():
+def get_score():
     '''Get trusted status of target user from source's perspective.'''
-    
-    source = request.args.get('source')
-    target = request.args.get('target')
 
-    trusts = Trust.query.filter_by(user_id=source).all()
+    try:
+        source = str(request.args.get('source')) # ignored for now, assumed to be 0
+        target = str(request.args.get('target'))
+    except:
+        body = '{"message": "Missing one or more required parameters."}'
+        return (body, 400, {'Content-length': len(body),
+                            'Content-Type':'text/plain'})
 
-    if trusts is None:
-        body = json.dumps({'error': 'User not found.'})
-        code = 404
-    else:
-        body = json.dumps(trusts)
-        code = 200
+    #trusts = Trust.query.filter_by(user_id=source).all()
 
-    return (body, code, {'Content-length': len(body),
+    global scores
+    body = str(target in scores and scores[target] >= 0 )
+
+    return (body, 200, {'Content-length': len(body),
                          'Content-type': 'application/json',
                         }
            )
-
-def has_no_empty_params(rule):
-    '''Testing rules to identify routes.'''
-    defaults = rule.defaults if rule.defaults is not None else ()
-    arguments = rule.arguments if rule.arguments is not None else ()
-    return len(defaults) >= len(arguments)
-
-@app.route('/info')
-def info():
-    '''Returns list of defined routes.'''
-    links = []
-    for rule in app.url_map.iter_rules():
-        # Filter out rules we can't navigate to in a browser
-        # and rules that require parameters
-        if "GET" in rule.methods and has_no_empty_params(rule):
-            url = url_for(rule.endpoint, **(rule.defaults or {}))
-            links.append(url)
-
-    return json.dumps(links, indent=2)
 
 
 if __name__ == '__main__':
