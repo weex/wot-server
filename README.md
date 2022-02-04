@@ -39,31 +39,4 @@ python -m test
 
 ## REST API
 
-* All requests via HTTP GET except where noted.
-* Data returned as JSON
-* All responses include `status` (an HTTP standard RFC 2616 response code) and `message` populated on error.
-
-/ - returns basic info
-
-/status - returns uptime and free space
-
-### /trust (POST) - set or update single trust value
-    Either value or delta must be set.
-
-    Parameters
-        source - string
-        dest - string
-        value - set trust value from source to dest, float in range (-100.0, 100.0) 
-        delta - amount to increment or decrement trust value, float in range (-200.0, 200)
-
-### /score - return score from source to dest
-    Parameters
-        source - string
-        dest - string
-
-    Returns
-        trusted - boolean
-        
-### /rescore - recalculate scores
-    Parameters
-        (none)
+The API is defined in openapi-spec.yaml
