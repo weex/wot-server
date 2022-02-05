@@ -8,6 +8,23 @@ servers:
   - url: http://localhost:20202
 
 paths:
+  /status:
+    get:
+      description: Return general info about server instance.
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uptime:
+                    description: uptime in seconds
+                    type: integer
+                  free:
+                    description: free space in Mb
+                    type: integer
   /trust:
     post:
       description: Set or update single trust value
@@ -36,7 +53,7 @@ paths:
           description: Success set or updated a trust value
   /score:
     get:
-      description: Set or update single trust value
+      description: Get trusted status of target user from perspective of source.
       requestBody:
         required: true
         content:
@@ -48,10 +65,10 @@ paths:
                 - target
               properties:
                 source:
-                  description: Giver of trust
+                  description: Requesting on behalf of
                   type: string
                 target:
-                  description: Recipient of trust
+                  description: User to return trusted state of
                   type: string
       responses:
         '200':
@@ -87,3 +104,23 @@ paths:
                 properties:   
                   message:
                     type: string
+  /debug:
+    get:
+      description: Get full state for debugging purposes.
+      responses:
+        '200':
+           description: Successfully retrieved
+           content:
+             application/json:
+               schema:
+                 type: object
+                 properties:
+                   paths:
+                     type: object
+                   ranks:
+                     type: object
+                   capacities:
+                     type: object
+                   scores:
+                     type: object
+

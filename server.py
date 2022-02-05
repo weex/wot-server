@@ -83,8 +83,6 @@ def post_trust():
     global scores
     scores = update_scores_from_one_trust(G, trusts, paths, ranks, capacities, scores, ownidentity, source, target, value) 
 
-    print(scores)
-
     #trust = db.session.query(Trust).filter(and_(Trust.user_id == s, Trust.user_id2 == t)).first()
     #if trust is None:
     #    trust = Trust(s, t, v)
@@ -116,6 +114,20 @@ def get_score():
 
     global scores
     body = str(target in scores and scores[target] >= 0 )
+
+    return (body, 200, {'Content-length': len(body),
+                         'Content-type': 'application/json',
+                        }
+           )
+
+@app.route('/debug')
+def get_debug():
+    '''Get full state for debugging purposes.'''
+
+    out = [{"paths": paths,
+            "scores": scores
+          }]
+    body = json.dumps(out)
 
     return (body, 200, {'Content-length': len(body),
                          'Content-type': 'application/json',
