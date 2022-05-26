@@ -23,3 +23,5 @@ python -m test
 ## REST API
 
 The API is defined in [openapi-spec.yaml](openapi-spec.yaml)
+
+You can open this in an API tool like Insomnia or Postman for easy testing of a running server.py.
