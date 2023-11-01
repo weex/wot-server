@@ -1,6 +1,8 @@
 # Web of Trust Server
  
-Server for federated Web of Trust.
+Server for Web of Trust.
+
+Inspired by: [Scalable Moderation using a web-of-trust model](https://socialhub.activitypub.rocks/t/scalable-moderation-using-a-web-of-trust-model/2005)
 
 Authenticated, pseudonymous user and content ratings
 
